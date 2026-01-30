@@ -1,0 +1,174 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// NextAuth.js Models
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// Application Models
+model User {
+  id            String   @id @default(cuid())
+  email         String?  @unique
+  emailVerified DateTime?
+  name          String?
+  image         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // OAuth identifiers (cache for convenience)
+  kakaoId       String?  @unique
+  googleId      String?  @unique
+
+  // Credit balance (cache)
+  creditBalance Int      @default(0)
+
+  accounts       Account[]
+  sessions       Session[]
+  paymentIntents PaymentIntent[]
+  payments       Payment[]
+  creditLedgers  CreditLedger[]
+  readings       Reading[]
+  shares         Share[]
+}
+
+model PaymentIntent {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  provider    String   // "toss" | "kakaopay"
+  productCode String   // "CREDIT_1" | "CREDIT_5" | "CREDIT_10"
+  amount      Int
+  currency    String   @default("KRW")
+
+  // Payment provider order/transaction key
+  providerOrderId String? @unique
+  status      String   @default("CREATED") // CREATED|REQUESTED|EXPIRED
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  payments    Payment[]
+}
+
+model Payment {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  provider    String   // "toss" | "kakaopay"
+  amount      Int
+  currency    String   @default("KRW")
+
+  // Payment provider unique key (for idempotency)
+  providerPaymentId String @unique
+
+  // Our order key (link to intent)
+  paymentIntentId String?
+  paymentIntent   PaymentIntent? @relation(fields: [paymentIntentId], references: [id])
+
+  status      String   // CONFIRMED|CANCELED|REFUNDED|FAILED|PENDING
+  raw         Json?    // Store verification response for audit/debug
+
+  confirmedAt DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  creditLedgers CreditLedger[]
+}
+
+model CreditLedger {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // +purchase / -consume
+  delta     Int
+
+  // Reason for change
+  reason    String   // PURCHASE|CONSUME|ADMIN_ADJUST|REFUND_REVERSAL etc
+
+  // Link to payment/reading for tracking
+  paymentId String?
+  payment   Payment? @relation(fields: [paymentId], references: [id])
+
+  readingId String?
+  reading   Reading? @relation(fields: [readingId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt])
+}
+
+model Reading {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  type      String   // SAJU|COMPAT|FORTUNE
+  input     Json     // User input (birthdate/gender/partner info etc)
+  result    Json     // OpenAI result (structured recommended)
+  summary   String?  // Summary for list display (optional)
+  createdAt DateTime @default(now())
+
+  // Sharing policy
+  isShareable Boolean @default(true)
+
+  creditLedgers CreditLedger[]
+  share       Share?
+}
+
+model Share {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  readingId String   @unique
+  reading   Reading  @relation(fields: [readingId], references: [id], onDelete: Cascade)
+
+  shareId   String   @unique // Token exposed in URL (e.g., nanoid)
+  createdAt DateTime @default(now())
+  revokedAt DateTime?
+}
