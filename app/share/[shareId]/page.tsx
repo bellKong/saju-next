@@ -1,5 +1,13 @@
 import { notFound } from "next/navigation";
 import prisma from "@/lib/prisma";
+import Header from "@/components/Header";
+import ScrollReveal from "@/components/ScrollReveal";
+
+const typeConfig = {
+  SAJU: { label: "사주팔자", icon: "🔮", gradient: "from-indigo-500 to-purple-600" },
+  COMPAT: { label: "궁합", icon: "💕", gradient: "from-pink-400 to-rose-500" },
+  FORTUNE: { label: "운세", icon: "⭐", gradient: "from-amber-400 to-orange-500" },
+};
 
 export default async function SharePage({
   params,
@@ -12,11 +20,7 @@ export default async function SharePage({
     where: { shareId },
     include: {
       reading: true,
-      user: {
-        select: {
-          name: true,
-        },
-      },
+      user: { select: { name: true } },
     },
   });
 
@@ -24,43 +28,63 @@ export default async function SharePage({
     notFound();
   }
 
-  const typeLabels = {
-    SAJU: "사주팔자",
-    COMPAT: "궁합",
-    FORTUNE: "운세",
-  };
+  const config =
+    typeConfig[share.reading.type as keyof typeof typeConfig] ||
+    typeConfig.SAJU;
 
   return (
-    <div className="min-h-screen p-8">
-      <div className="max-w-4xl mx-auto">
-        <div className="bg-white rounded-lg shadow-lg p-8">
-          <div className="mb-6 pb-6 border-b">
-            <div className="flex items-center gap-3 mb-2">
-              <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
-                {typeLabels[share.reading.type as keyof typeof typeLabels] || share.reading.type}
-              </span>
-              <span className="text-sm text-gray-500">
-                {new Date(share.reading.createdAt).toLocaleDateString("ko-KR")}
-              </span>
-            </div>
-            <p className="text-sm text-gray-600">
-              {share.user.name}님이 공유한 결과입니다
-            </p>
-          </div>
+    <>
+      <Header isLoggedIn={false} />
 
-          <div className="prose max-w-none">
-            <h2 className="text-2xl font-bold mb-4">입력 정보</h2>
-            <pre className="bg-gray-50 p-4 rounded-lg mb-6">
-              {JSON.stringify(share.reading.input, null, 2)}
-            </pre>
-
-            <h2 className="text-2xl font-bold mb-4">결과</h2>
-            <div className="bg-gray-50 p-6 rounded-lg whitespace-pre-wrap">
-              {JSON.stringify(share.reading.result, null, 2)}
+      <main className="pb-safe">
+        <ScrollReveal>
+          <div className="px-6 pt-6">
+            <div className={`relative overflow-hidden rounded-3xl bg-gradient-to-br ${config.gradient} p-7`}>
+              <div className="absolute top-2 right-4 text-6xl opacity-20">
+                {config.icon}
+              </div>
+              <div className="relative z-10">
+                <span className="inline-block px-2.5 py-1 bg-white/20 rounded-lg text-xs font-semibold text-white/90 mb-3">
+                  {config.label}
+                </span>
+                <h1 className="text-2xl font-bold text-white mb-1">
+                  {share.reading.summary || "분석 결과"}
+                </h1>
+                <p className="text-white/70 text-sm">
+                  {share.user.name}님이 공유한 결과입니다
+                </p>
+              </div>
             </div>
           </div>
-        </div>
-      </div>
-    </div>
+        </ScrollReveal>
+
+        <ScrollReveal delay={200}>
+          <div className="px-6 py-6">
+            <div className="bg-white rounded-3xl border border-gray-100 p-6">
+              <div className="prose prose-sm max-w-none whitespace-pre-wrap text-gray-700 leading-relaxed">
+                {(share.reading.result as any)?.content ||
+                  JSON.stringify(share.reading.result, null, 2)}
+              </div>
+            </div>
+          </div>
+        </ScrollReveal>
+
+        <ScrollReveal delay={400}>
+          <div className="px-6 pb-8">
+            <div className="bg-gray-900 rounded-3xl p-6 text-center">
+              <p className="text-white font-semibold mb-2">
+                나도 사주를 보고 싶다면?
+              </p>
+              <a
+                href="/"
+                className="inline-block px-6 py-3 bg-white text-gray-900 rounded-2xl font-semibold text-sm hover:bg-gray-100 transition-colors"
+              >
+                AI 사주 시작하기
+              </a>
+            </div>
+          </div>
+        </ScrollReveal>
+      </main>
+    </>
   );
 }

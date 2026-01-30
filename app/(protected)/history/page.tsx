@@ -2,6 +2,13 @@ import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import prisma from "@/lib/prisma";
 import Link from "next/link";
+import ScrollReveal from "@/components/ScrollReveal";
+
+const typeConfig = {
+  SAJU: { label: "사주팔자", icon: "🔮", color: "bg-indigo-100 text-indigo-700" },
+  COMPAT: { label: "궁합", icon: "💕", color: "bg-pink-100 text-pink-700" },
+  FORTUNE: { label: "운세", icon: "⭐", color: "bg-amber-100 text-amber-700" },
+};
 
 export default async function HistoryPage() {
   const session = await auth();
@@ -11,88 +18,94 @@ export default async function HistoryPage() {
   }
 
   const readings = await prisma.reading.findMany({
-    where: {
-      userId: session.user.id,
-    },
-    orderBy: {
-      createdAt: "desc",
-    },
+    where: { userId: session.user.id },
+    orderBy: { createdAt: "desc" },
     take: 50,
-    include: {
-      share: true,
-    },
+    include: { share: true },
   });
 
-  const typeLabels = {
-    SAJU: "사주팔자",
-    COMPAT: "궁합",
-    FORTUNE: "운세",
-  };
-
   return (
-    <div className="min-h-screen p-8">
-      <div className="max-w-4xl mx-auto">
-        <h1 className="text-4xl font-bold mb-8">내 기록</h1>
-
-        <div className="bg-white rounded-lg shadow p-6 mb-6">
-          <div className="mb-4">
-            <p className="text-sm text-gray-600">보유 크레딧</p>
-            <p className="text-2xl font-bold">{session.user.creditBalance}회</p>
-          </div>
-          <Link
-            href="/billing"
-            className="inline-block px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-          >
-            크레딧 충전
-          </Link>
+    <div>
+      <ScrollReveal>
+        <div className="px-6 pt-6 pb-4">
+          <h1 className="text-2xl font-bold text-gray-900">내 기록</h1>
+          <p className="text-sm text-gray-500 mt-1">
+            총 {readings.length}개의 기록
+          </p>
         </div>
+      </ScrollReveal>
 
-        <div className="space-y-4">
-          {readings.length === 0 ? (
-            <div className="bg-white rounded-lg shadow p-8 text-center text-gray-500">
-              아직 기록이 없습니다
-            </div>
-          ) : (
-            readings.map((reading) => (
-              <div
-                key={reading.id}
-                className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow"
+      <div className="px-6 pb-6">
+        {readings.length === 0 ? (
+          <ScrollReveal delay={100}>
+            <div className="flex flex-col items-center justify-center py-20 text-center">
+              <div className="text-5xl mb-4">📋</div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-1">
+                아직 기록이 없어요
+              </h3>
+              <p className="text-sm text-gray-400 mb-6">
+                사주, 궁합, 운세를 확인해보세요
+              </p>
+              <Link
+                href="/saju"
+                className="px-6 py-3 bg-gray-900 text-white rounded-2xl font-semibold text-sm"
               >
-                <div className="flex justify-between items-start">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
-                      <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
-                        {typeLabels[reading.type as keyof typeof typeLabels] || reading.type}
-                      </span>
-                      <span className="text-sm text-gray-500">
-                        {new Date(reading.createdAt).toLocaleDateString("ko-KR")}
-                      </span>
-                    </div>
-                    {reading.summary && (
-                      <p className="text-gray-700 mb-2">{reading.summary}</p>
-                    )}
-                  </div>
-                  <div className="flex gap-2">
-                    <Link
-                      href={`/reading/${reading.id}`}
-                      className="px-4 py-2 text-sm border border-blue-600 text-blue-600 rounded-lg hover:bg-blue-50"
-                    >
-                      보기
-                    </Link>
-                    {reading.share && !reading.share.revokedAt && (
-                      <Link
-                        href={`/share/${reading.share.shareId}`}
-                        className="px-4 py-2 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700"
+                사주 보러가기
+              </Link>
+            </div>
+          </ScrollReveal>
+        ) : (
+          <div className="space-y-3">
+            {readings.map((reading, i) => {
+              const config =
+                typeConfig[reading.type as keyof typeof typeConfig] ||
+                typeConfig.SAJU;
+              return (
+                <ScrollReveal key={reading.id} delay={80 * i}>
+                  <div className="bg-gray-50 rounded-2xl p-5 hover:bg-gray-100 transition-colors card-hover">
+                    <div className="flex items-start gap-4">
+                      <div className="w-11 h-11 rounded-2xl bg-white flex items-center justify-center text-xl shadow-sm shrink-0">
+                        {config.icon}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span
+                            className={`px-2 py-0.5 rounded-md text-xs font-semibold ${config.color}`}
+                          >
+                            {config.label}
+                          </span>
+                          <span className="text-xs text-gray-400">
+                            {new Date(reading.createdAt).toLocaleDateString(
+                              "ko-KR",
+                              {
+                                month: "short",
+                                day: "numeric",
+                              }
+                            )}
+                          </span>
+                        </div>
+                        <p className="text-sm font-medium text-gray-900 truncate">
+                          {reading.summary || "결과 보기"}
+                        </p>
+                      </div>
+                      <svg
+                        width="16"
+                        height="16"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="#d1d5db"
+                        strokeWidth="2"
+                        className="shrink-0 mt-3"
                       >
-                        공유됨
-                      </Link>
-                    )}
+                        <path d="M9 18l6-6-6-6" />
+                      </svg>
+                    </div>
                   </div>
-                </div>
-              </div>
-            ))
-          )}
-        </div>
+                </ScrollReveal>
+              );
+            })}
+          </div>
+        )}
       </div>
     </div>
   );
