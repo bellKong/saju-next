@@ -46,7 +46,7 @@ export default function Header({
                 </span>
               </Link>
               <Link
-                href="/history"
+                href="/mypage"
                 className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors"
               >
                 <svg
@@ -57,9 +57,10 @@ export default function Header({
                   stroke="#374151"
                   strokeWidth="2"
                   strokeLinecap="round"
+                  strokeLinejoin="round"
                 >
-                  <path d="M12 8v4l3 3" />
-                  <circle cx="12" cy="12" r="10" />
+                  <circle cx="12" cy="8" r="4" />
+                  <path d="M20 21a8 8 0 1 0-16 0" />
                 </svg>
               </Link>
             </>

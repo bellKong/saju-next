@@ -7,6 +7,7 @@ const protectedPaths = [
   "/fortune",
   "/history",
   "/billing",
+  "/mypage",
 ];
 
 export function middleware(req: NextRequest) {

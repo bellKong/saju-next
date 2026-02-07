@@ -15,11 +15,31 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { type, input } = body;
+    const { type, input: rawInput, personId } = body;
 
     // Validate type
     if (!["SAJU", "COMPAT", "FORTUNE"].includes(type)) {
       return NextResponse.json({ error: "Invalid type" }, { status: 400 });
+    }
+
+    // If personId provided, build input from Person record
+    let input = rawInput;
+    if (personId && type === "SAJU") {
+      const person = await prisma.person.findUnique({
+        where: { id: personId },
+      });
+      if (!person || person.userId !== session.user.id) {
+        return NextResponse.json({ error: "Person not found" }, { status: 404 });
+      }
+      input = {
+        name: person.name,
+        relationship: person.relationship,
+        birthDate: person.birthDate,
+        birthTime: person.birthTime || "모름",
+        knowExactTime: person.birthTime ? "예" : "아니오",
+        calendarType: person.calendarType,
+        gender: person.gender,
+      };
     }
 
     // Deduct credit in transaction with row-level locking
@@ -120,6 +140,7 @@ export async function POST(req: NextRequest) {
           input,
           result: { content: aiResult },
           summary,
+          ...(personId ? { personId } : {}),
         },
       });
 

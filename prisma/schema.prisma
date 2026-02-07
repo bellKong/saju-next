@@ -71,6 +71,7 @@ model User {
   creditLedgers  CreditLedger[]
   readings       Reading[]
   shares         Share[]
+  persons        Person[]
 }
 
 model PaymentIntent {
@@ -153,11 +154,35 @@ model Reading {
   summary   String?  // Summary for list display (optional)
   createdAt DateTime @default(now())
 
+  // Link to person
+  personId  String?
+  person    Person?  @relation(fields: [personId], references: [id], onDelete: SetNull)
+
   // Sharing policy
   isShareable Boolean @default(true)
 
   creditLedgers CreditLedger[]
   share       Share?
+}
+
+model Person {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  name          String
+  relationship  String   // 본인|친구|가족|연인|부모|자녀
+  birthDate     String
+  birthTime     String?  // null = 모름
+  calendarType  String   @default("양력") // 양력|음력
+  gender        String   // male|female
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  readings      Reading[]
+
+  @@index([userId])
 }
 
 model Share {
