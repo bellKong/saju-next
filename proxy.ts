@@ -10,7 +10,7 @@ const protectedPaths = [
   "/mypage",
 ];
 
-export function middleware(req: NextRequest) {
+export function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
   const isProtected = protectedPaths.some((path) =>
@@ -18,7 +18,7 @@ export function middleware(req: NextRequest) {
   );
 
   if (isProtected) {
-    // Check for session token cookie (works in Edge Runtime without Prisma)
+    // Check for session token cookie (works without Prisma)
     const sessionToken =
       req.cookies.get("authjs.session-token")?.value ||
       req.cookies.get("__Secure-authjs.session-token")?.value;
