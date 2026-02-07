@@ -61,6 +61,10 @@ model User {
   kakaoId       String?  @unique
   googleId      String?  @unique
 
+  // Profile info
+  birthDate     String?
+  gender        String?  // male|female
+
   // Credit balance (cache)
   creditBalance Int      @default(0)
 

@@ -49,12 +49,14 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     async session({ session, user }) {
       if (session.user) {
         session.user.id = user.id
-        // Fetch fresh credit balance
+        // Fetch fresh user data
         const dbUser = await prisma.user.findUnique({
           where: { id: user.id },
-          select: { creditBalance: true },
+          select: { creditBalance: true, birthDate: true, gender: true },
         })
         session.user.creditBalance = dbUser?.creditBalance ?? 0
+        session.user.birthDate = dbUser?.birthDate ?? null
+        session.user.gender = dbUser?.gender ?? null
       }
       return session
     },
