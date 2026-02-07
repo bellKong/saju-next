@@ -59,14 +59,14 @@ export default async function Home() {
 
         {/* Service Cards */}
         <section className="px-6 pb-12">
-          <ScrollReveal delay={100}>
+          <ScrollReveal>
             <h2 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-5">
               서비스
             </h2>
           </ScrollReveal>
 
           <div className="space-y-4">
-            <ScrollReveal delay={150}>
+            <ScrollReveal>
               <Link href="/saju" className="block">
                 <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-500 to-indigo-700 p-7 card-hover">
                   <div className="absolute top-4 right-4 w-20 h-20 opacity-20">
@@ -92,7 +92,7 @@ export default async function Home() {
             </ScrollReveal>
 
             <div className="grid grid-cols-2 gap-4">
-              <ScrollReveal delay={250}>
+              <ScrollReveal>
                 <Link href="/compatibility" className="block">
                   <div className="rounded-3xl bg-gradient-to-br from-pink-50 to-pink-100 p-6 card-hover h-full">
                     <div className="w-12 h-12 rounded-2xl bg-pink-200/60 flex items-center justify-center mb-4">
@@ -106,7 +106,7 @@ export default async function Home() {
                 </Link>
               </ScrollReveal>
 
-              <ScrollReveal delay={350}>
+              <ScrollReveal>
                 <Link href="/fortune" className="block">
                   <div className="rounded-3xl bg-gradient-to-br from-amber-50 to-amber-100 p-6 card-hover h-full">
                     <div className="w-12 h-12 rounded-2xl bg-amber-200/60 flex items-center justify-center mb-4">
@@ -125,7 +125,7 @@ export default async function Home() {
 
         {/* Features Section */}
         <section className="px-6 pb-12">
-          <ScrollReveal delay={100}>
+          <ScrollReveal>
             <h2 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-5">
               이런 것들을 알 수 있어요
             </h2>
@@ -138,8 +138,8 @@ export default async function Home() {
               { icon: "💼", title: "직업운", desc: "커리어와 사업 방향" },
               { icon: "🏥", title: "건강운", desc: "건강 관리 포인트" },
               { icon: "🌟", title: "총운", desc: "올해의 종합 운세" },
-            ].map((item, i) => (
-              <ScrollReveal key={item.title} delay={150 + i * 80}>
+            ].map((item) => (
+              <ScrollReveal key={item.title}>
                 <div className="flex items-center gap-4 px-5 py-4 rounded-2xl bg-gray-50 hover:bg-gray-100 transition-colors">
                   <span className="text-2xl">{item.icon}</span>
                   <div className="flex-1">

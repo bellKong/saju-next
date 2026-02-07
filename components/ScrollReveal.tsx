@@ -5,7 +5,6 @@ import { useEffect, useRef, useState } from "react";
 interface ScrollRevealProps {
   children: React.ReactNode;
   className?: string;
-  delay?: number;
   direction?: "up" | "down" | "left" | "right" | "none";
   distance?: number;
   duration?: number;
@@ -14,10 +13,9 @@ interface ScrollRevealProps {
 export default function ScrollReveal({
   children,
   className = "",
-  delay = 0,
   direction = "up",
-  distance = 30,
-  duration = 600,
+  distance = 20,
+  duration = 400,
 }: ScrollRevealProps) {
   const ref = useRef<HTMLDivElement>(null);
   const [isVisible, setIsVisible] = useState(false);
@@ -63,7 +61,7 @@ export default function ScrollReveal({
       style={{
         opacity: isVisible ? 1 : 0,
         transform: getTransform(),
-        transition: `opacity ${duration}ms ease-out ${delay}ms, transform ${duration}ms ease-out ${delay}ms`,
+        transition: `opacity ${duration}ms ease-out, transform ${duration}ms ease-out`,
         willChange: "opacity, transform",
       }}
     >

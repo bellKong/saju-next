@@ -32,7 +32,7 @@ export default function LoginPage() {
           </div>
         </ScrollReveal>
 
-        <ScrollReveal delay={200}>
+        <ScrollReveal>
           <div className="w-full max-w-sm space-y-3">
             <form
               action={async () => {
@@ -74,7 +74,7 @@ export default function LoginPage() {
           </div>
         </ScrollReveal>
 
-        <ScrollReveal delay={400}>
+        <ScrollReveal>
           <p className="text-xs text-gray-400 text-center mt-8 px-4 leading-relaxed">
             로그인 시{" "}
             <span className="underline">이용약관</span> 및{" "}

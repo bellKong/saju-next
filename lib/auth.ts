@@ -4,8 +4,9 @@ import KakaoProvider from "next-auth/providers/kakao"
 import { PrismaAdapter } from "@auth/prisma-adapter"
 import prisma from "./prisma"
 import type { Adapter } from "next-auth/adapters"
+import { cache } from "react"
 
-export const { handlers, signIn, signOut, auth } = NextAuth({
+const { handlers, signIn, signOut, auth: uncachedAuth } = NextAuth({
   adapter: PrismaAdapter(prisma) as Adapter,
   providers: [
     GoogleProvider({
@@ -68,3 +69,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     strategy: "database",
   },
 })
+
+// Deduplicate auth() calls within a single request
+const auth = cache(uncachedAuth)
+
+export { handlers, signIn, signOut, auth }

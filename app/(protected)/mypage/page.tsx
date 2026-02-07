@@ -107,7 +107,7 @@ export default async function MyPage() {
       </ScrollReveal>
 
       {/* 나의 기록 */}
-      <ScrollReveal delay={100}>
+      <ScrollReveal>
         <div className="px-6 pb-6">
           <Link
             href="/history"
@@ -145,7 +145,7 @@ export default async function MyPage() {
       </ScrollReveal>
 
       {/* Services */}
-      <ScrollReveal delay={200}>
+      <ScrollReveal>
         <div className="px-6 pb-6">
           <h2 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-4">
             서비스
@@ -181,7 +181,7 @@ export default async function MyPage() {
       </ScrollReveal>
 
       {/* Fortune Categories */}
-      <ScrollReveal delay={300}>
+      <ScrollReveal>
         <div className="px-6 pb-6">
           <h2 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-4">
             이런 것들을 알 수 있어요
@@ -206,7 +206,7 @@ export default async function MyPage() {
       </ScrollReveal>
 
       {/* Logout */}
-      <ScrollReveal delay={400}>
+      <ScrollReveal>
         <div className="px-6 pb-8">
           <form
             action={async () => {

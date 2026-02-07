@@ -21,7 +21,7 @@ export default async function BillingPage() {
         </div>
       </ScrollReveal>
 
-      <ScrollReveal delay={100}>
+      <ScrollReveal>
         <div className="px-6 pb-6">
           <div className="bg-gradient-to-r from-gray-900 to-gray-800 rounded-2xl p-6 flex items-center justify-between">
             <div>
@@ -41,7 +41,7 @@ export default async function BillingPage() {
         </div>
       </ScrollReveal>
 
-      <ScrollReveal delay={200}>
+      <ScrollReveal>
         <div className="px-6 pb-4">
           <h2 className="text-sm font-bold text-gray-400 uppercase tracking-widest">
             상품 선택

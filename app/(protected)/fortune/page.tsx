@@ -27,7 +27,7 @@ export default async function FortunePage() {
         </div>
       </ScrollReveal>
 
-      <ScrollReveal delay={100}>
+      <ScrollReveal>
         <div className="px-6 py-3">
           <div className="flex items-center gap-3 px-5 py-3 rounded-2xl bg-amber-50">
             <div className="w-8 h-8 rounded-full bg-amber-500 flex items-center justify-center">
@@ -41,7 +41,7 @@ export default async function FortunePage() {
         </div>
       </ScrollReveal>
 
-      <ScrollReveal delay={200}>
+      <ScrollReveal>
         <FortuneForm creditBalance={session.user.creditBalance} />
       </ScrollReveal>
     </div>

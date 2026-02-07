@@ -37,7 +37,7 @@ export default async function HistoryPage() {
 
       <div className="px-6 pb-6">
         {readings.length === 0 ? (
-          <ScrollReveal delay={100}>
+          <ScrollReveal>
             <div className="flex flex-col items-center justify-center py-20 text-center">
               <div className="text-5xl mb-4">📋</div>
               <h3 className="text-lg font-semibold text-gray-900 mb-1">
@@ -56,12 +56,12 @@ export default async function HistoryPage() {
           </ScrollReveal>
         ) : (
           <div className="space-y-3">
-            {readings.map((reading, i) => {
+            {readings.map((reading) => {
               const config =
                 typeConfig[reading.type as keyof typeof typeConfig] ||
                 typeConfig.SAJU;
               return (
-                <ScrollReveal key={reading.id} delay={80 * i}>
+                <ScrollReveal key={reading.id}>
                   <div className="bg-gray-50 rounded-2xl p-5 hover:bg-gray-100 transition-colors card-hover">
                     <div className="flex items-start gap-4">
                       <div className="w-11 h-11 rounded-2xl bg-white flex items-center justify-center text-xl shadow-sm shrink-0">

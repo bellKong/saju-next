@@ -58,7 +58,7 @@ export default async function SharePage({
           </div>
         </ScrollReveal>
 
-        <ScrollReveal delay={200}>
+        <ScrollReveal>
           <div className="px-6 py-6">
             <div className="bg-white rounded-3xl border border-gray-100 p-6">
               <div className="prose prose-sm max-w-none whitespace-pre-wrap text-gray-700 leading-relaxed">
@@ -69,7 +69,7 @@ export default async function SharePage({
           </div>
         </ScrollReveal>
 
-        <ScrollReveal delay={400}>
+        <ScrollReveal>
           <div className="px-6 pb-8">
             <div className="bg-gray-900 rounded-3xl p-6 text-center">
               <p className="text-white font-semibold mb-2">
