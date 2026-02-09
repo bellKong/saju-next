@@ -6,6 +6,7 @@ import {
   generateCompatibility,
   generateFortune,
 } from "@/lib/openai";
+import { calculateSaju, type SajuResult } from "@/lib/saju-calculator";
 
 export async function POST(req: NextRequest) {
   try {
@@ -89,9 +90,25 @@ export async function POST(req: NextRequest) {
     let aiResult: string | null;
     let summary: string;
 
+    // Calculate saju if type is SAJU
+    let sajuResult: SajuResult | undefined;
+    if (type === "SAJU") {
+      try {
+        sajuResult = await calculateSaju({
+          birthDate: input.birthDate,
+          birthTime: input.birthTime || "모름",
+          calendarType: input.calendarType || "양력",
+          gender: input.gender,
+        });
+      } catch (sajuError) {
+        console.warn("Saju calculation failed, falling back to GPT-only:", sajuError);
+        // sajuResult remains undefined → GPT will estimate
+      }
+    }
+
     try {
       if (type === "SAJU") {
-        aiResult = await generateSaju(input);
+        aiResult = await generateSaju({ ...input, sajuResult });
         summary = `사주팔자 - ${input.birthDate}`;
       } else if (type === "COMPAT") {
         aiResult = await generateCompatibility(input);
@@ -137,7 +154,7 @@ export async function POST(req: NextRequest) {
         data: {
           userId,
           type,
-          input,
+          input: sajuResult ? { ...input, sajuResult } : input,
           result: { content: aiResult },
           summary,
           ...(personId ? { personId } : {}),

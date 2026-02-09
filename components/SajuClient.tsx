@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 
 interface LatestReading {
   id: string;
@@ -23,6 +22,26 @@ interface Person {
   latestReading: LatestReading | null;
 }
 
+interface Pillar {
+  gan: string;
+  ji: string;
+  ganKr: string;
+  jiKr: string;
+  ohangGan: string;
+  ohangJi: string;
+}
+
+interface SajuResult {
+  yearPillar: Pillar;
+  monthPillar: Pillar;
+  dayPillar: Pillar;
+  timePillar: Pillar | null;
+  ohang: Record<string, number>;
+  solarDate: string;
+  lunarDate: string;
+  sajuYear: number;
+}
+
 interface Props {
   creditBalance: number;
   initialPersons: Person[];
@@ -30,7 +49,26 @@ interface Props {
 
 const relationships = ["본인", "친구", "가족", "연인", "부모", "자녀"];
 
-type View = "list" | "form" | "loading" | "detail";
+// 오행별 색상 매핑
+const OHANG_COLORS: Record<string, { bg: string; text: string }> = {
+  木: { bg: "bg-green-700", text: "text-green-300" },
+  火: { bg: "bg-red-800", text: "text-red-300" },
+  土: { bg: "bg-yellow-700", text: "text-yellow-200" },
+  金: { bg: "bg-gray-500", text: "text-gray-200" },
+  水: { bg: "bg-blue-800", text: "text-blue-300" },
+};
+
+function PillarCell({ label, char, kr, ohang }: { label: string; char: string; kr: string; ohang: string }) {
+  const color = OHANG_COLORS[ohang] || { bg: "bg-gray-600", text: "text-gray-200" };
+  return (
+    <div className={`flex flex-col items-center justify-center py-4 ${color.bg} rounded-xl`}>
+      <span className={`text-3xl font-bold ${color.text}`}>{char}</span>
+      <span className={`text-sm mt-1 ${color.text} opacity-80`}>{kr}</span>
+    </div>
+  );
+}
+
+type View = "list" | "form" | "loading" | "preview" | "detail";
 
 export default function SajuClient({ creditBalance, initialPersons }: Props) {
   const router = useRouter();
@@ -38,6 +76,8 @@ export default function SajuClient({ creditBalance, initialPersons }: Props) {
   const [view, setView] = useState<View>("list");
   const [selectedPerson, setSelectedPerson] = useState<Person | null>(null);
   const [currentReading, setCurrentReading] = useState<LatestReading | null>(null);
+  const [sajuPreview, setSajuPreview] = useState<SajuResult | null>(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [savingPerson, setSavingPerson] = useState(false);
 
@@ -118,7 +158,7 @@ export default function SajuClient({ creditBalance, initialPersons }: Props) {
   };
 
   const handlePersonClick = async (person: Person) => {
-    // If already has a reading, show it directly (free)
+    // If already has a reading, show detail directly
     if (person.latestReading) {
       setSelectedPerson(person);
       setCurrentReading(person.latestReading);
@@ -126,13 +166,47 @@ export default function SajuClient({ creditBalance, initialPersons }: Props) {
       return;
     }
 
-    // No reading yet — generate one (costs 1 credit)
+    // Show 만세력 preview first (free)
+    setSelectedPerson(person);
+    setPreviewLoading(true);
+    setSajuPreview(null);
+    setView("preview");
+
+    try {
+      const res = await fetch("/api/saju/preview", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          birthDate: person.birthDate,
+          birthTime: person.birthTime || "모름",
+          calendarType: person.calendarType,
+          gender: person.gender,
+        }),
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        setSajuPreview(data.sajuResult);
+      } else {
+        alert(data.error || "만세력 계산에 실패했습니다");
+        setView("list");
+      }
+    } catch {
+      alert("네트워크 오류가 발생했습니다");
+      setView("list");
+    } finally {
+      setPreviewLoading(false);
+    }
+  };
+
+  const handleGenerateReading = async () => {
+    if (!selectedPerson) return;
+
     if (creditBalance <= 0) {
       alert("크레딧이 부족합니다. 충전 후 이용해주세요.");
       return;
     }
 
-    setSelectedPerson(person);
     setView("loading");
 
     try {
@@ -141,7 +215,7 @@ export default function SajuClient({ creditBalance, initialPersons }: Props) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           type: "SAJU",
-          personId: person.id,
+          personId: selectedPerson.id,
         }),
       });
 
@@ -155,21 +229,20 @@ export default function SajuClient({ creditBalance, initialPersons }: Props) {
           createdAt: data.reading.createdAt,
         };
         setCurrentReading(reading);
-        // Update person in list with the new reading
         setPersons((prev) =>
           prev.map((p) =>
-            p.id === person.id ? { ...p, latestReading: reading } : p
+            p.id === selectedPerson.id ? { ...p, latestReading: reading } : p
           )
         );
         setView("detail");
         router.refresh();
       } else {
         alert(data.error || "오류가 발생했습니다");
-        setView("list");
+        setView("preview");
       }
     } catch {
       alert("네트워크 오류가 발생했습니다");
-      setView("list");
+      setView("preview");
     }
   };
 
@@ -196,6 +269,165 @@ export default function SajuClient({ creditBalance, initialPersons }: Props) {
     }
   };
 
+  // Preview view — 만세력 미리보기
+  if (view === "preview" && selectedPerson) {
+    const displayGender = selectedPerson.gender === "female" ? "여성" : "남성";
+    const isYajasi = selectedPerson.birthTime
+      ? parseInt(selectedPerson.birthTime.split(":")[0]) >= 23
+      : false;
+
+    return (
+      <div className="pb-24">
+        <div className="px-6 pt-6 pb-2">
+          <button
+            onClick={() => {
+              setView("list");
+              setSelectedPerson(null);
+              setSajuPreview(null);
+            }}
+            className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 transition-colors mb-4"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M15 18l-6-6 6-6" />
+            </svg>
+            목록으로
+          </button>
+        </div>
+
+        {previewLoading ? (
+          <div className="flex flex-col items-center justify-center py-20">
+            <div className="relative w-20 h-20 mb-6">
+              <div className="absolute inset-0 rounded-full border-4 border-indigo-100" />
+              <div className="absolute inset-0 rounded-full border-4 border-indigo-500 border-t-transparent animate-spin" />
+              <div className="absolute inset-0 flex items-center justify-center text-2xl animate-float">
+                🔮
+              </div>
+            </div>
+            <p className="text-lg font-semibold text-gray-900 mb-1">만세력을 계산하고 있어요</p>
+            <p className="text-sm text-gray-400">잠시만 기다려주세요...</p>
+          </div>
+        ) : sajuPreview ? (
+          <div className="px-6">
+            {/* 만세력 미리보기 헤더 */}
+            <div className="text-center mb-5">
+              <span className="text-lg font-bold text-gray-900">💎 만세력 미리보기 💎</span>
+            </div>
+
+            {/* 인적 정보 */}
+            <div className="bg-white rounded-2xl border border-gray-100 divide-y divide-gray-100 mb-5">
+              {[
+                ["이름", selectedPerson.name],
+                ["관계", selectedPerson.relationship],
+                ["성별", displayGender],
+                ["생년월일", selectedPerson.birthDate],
+                ["달력", selectedPerson.calendarType],
+                ["출생 시각", selectedPerson.birthTime || "-"],
+                ["야자시", isYajasi ? "해당" : "-"],
+              ].map(([label, value]) => (
+                <div key={label} className="flex items-center justify-between px-5 py-3">
+                  <span className="text-sm text-gray-500">{label}</span>
+                  <span className="text-sm font-medium text-gray-900">{value}</span>
+                </div>
+              ))}
+            </div>
+
+            {/* 사주 팔자 4주 표시 */}
+            <div className="mb-5">
+              {/* 헤더 라벨 */}
+              <div className="grid grid-cols-4 gap-2 mb-2">
+                {["시주", "일주", "월주", "연주"].map((label) => (
+                  <div key={label} className="text-center text-sm font-semibold text-gray-700">
+                    {label}
+                  </div>
+                ))}
+              </div>
+
+              {/* 천간 (위 행) */}
+              <div className="grid grid-cols-4 gap-2 mb-2">
+                {sajuPreview.timePillar ? (
+                  <PillarCell
+                    label="시간"
+                    char={sajuPreview.timePillar.gan}
+                    kr={sajuPreview.timePillar.ganKr}
+                    ohang={sajuPreview.timePillar.ohangGan}
+                  />
+                ) : (
+                  <div className="flex flex-col items-center justify-center py-4 bg-gray-200 rounded-xl">
+                    <span className="text-3xl font-bold text-gray-400">?</span>
+                    <span className="text-sm mt-1 text-gray-400">미상</span>
+                  </div>
+                )}
+                <PillarCell label="일간" char={sajuPreview.dayPillar.gan} kr={sajuPreview.dayPillar.ganKr} ohang={sajuPreview.dayPillar.ohangGan} />
+                <PillarCell label="월간" char={sajuPreview.monthPillar.gan} kr={sajuPreview.monthPillar.ganKr} ohang={sajuPreview.monthPillar.ohangGan} />
+                <PillarCell label="연간" char={sajuPreview.yearPillar.gan} kr={sajuPreview.yearPillar.ganKr} ohang={sajuPreview.yearPillar.ohangGan} />
+              </div>
+
+              {/* 지지 (아래 행) */}
+              <div className="grid grid-cols-4 gap-2">
+                {sajuPreview.timePillar ? (
+                  <PillarCell
+                    label="시지"
+                    char={sajuPreview.timePillar.ji}
+                    kr={sajuPreview.timePillar.jiKr}
+                    ohang={sajuPreview.timePillar.ohangJi}
+                  />
+                ) : (
+                  <div className="flex flex-col items-center justify-center py-4 bg-gray-200 rounded-xl">
+                    <span className="text-3xl font-bold text-gray-400">?</span>
+                    <span className="text-sm mt-1 text-gray-400">미상</span>
+                  </div>
+                )}
+                <PillarCell label="일지" char={sajuPreview.dayPillar.ji} kr={sajuPreview.dayPillar.jiKr} ohang={sajuPreview.dayPillar.ohangJi} />
+                <PillarCell label="월지" char={sajuPreview.monthPillar.ji} kr={sajuPreview.monthPillar.jiKr} ohang={sajuPreview.monthPillar.ohangJi} />
+                <PillarCell label="연지" char={sajuPreview.yearPillar.ji} kr={sajuPreview.yearPillar.jiKr} ohang={sajuPreview.yearPillar.ohangJi} />
+              </div>
+            </div>
+
+            {/* 오행 분포 */}
+            <div className="bg-white rounded-2xl border border-gray-100 p-5 mb-6">
+              <h3 className="text-sm font-bold text-gray-900 mb-3">오행 분포</h3>
+              <div className="grid grid-cols-5 gap-2">
+                {(["木", "火", "土", "金", "水"] as const).map((oh) => {
+                  const count = sajuPreview.ohang[oh] || 0;
+                  const color = OHANG_COLORS[oh];
+                  const labels: Record<string, string> = { 木: "목", 火: "화", 土: "토", 金: "금", 水: "수" };
+                  return (
+                    <div key={oh} className="flex flex-col items-center">
+                      <div className={`w-full py-2 rounded-lg ${color.bg} flex items-center justify-center`}>
+                        <span className={`text-lg font-bold ${color.text}`}>{count}</span>
+                      </div>
+                      <span className="text-xs text-gray-500 mt-1">{oh}({labels[oh]})</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* 사주풀이 버튼 */}
+            <button
+              onClick={handleGenerateReading}
+              disabled={creditBalance <= 0}
+              className="w-full py-4 rounded-2xl bg-indigo-600 font-bold text-white text-base hover:bg-indigo-500 transition-colors active:scale-98 disabled:opacity-50 disabled:cursor-not-allowed mb-3"
+            >
+              {creditBalance <= 0
+                ? "크레딧 부족"
+                : `사주풀이 하기 (1크레딧 차감)`}
+            </button>
+
+            {creditBalance <= 0 && (
+              <button
+                onClick={() => router.push("/billing")}
+                className="w-full py-3.5 rounded-2xl bg-gray-900 font-semibold text-white hover:bg-gray-800 transition-colors active:scale-98"
+              >
+                크레딧 충전하기
+              </button>
+            )}
+          </div>
+        ) : null}
+      </div>
+    );
+  }
+
   // Detail view
   if (view === "detail" && selectedPerson && currentReading) {
     return (
@@ -206,6 +438,7 @@ export default function SajuClient({ creditBalance, initialPersons }: Props) {
               setView("list");
               setSelectedPerson(null);
               setCurrentReading(null);
+              setSajuPreview(null);
             }}
             className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 transition-colors mb-4"
           >
@@ -253,6 +486,7 @@ export default function SajuClient({ creditBalance, initialPersons }: Props) {
                 setView("list");
                 setSelectedPerson(null);
                 setCurrentReading(null);
+                setSajuPreview(null);
               }}
               className="flex-1 py-3.5 rounded-2xl bg-gray-100 font-semibold text-gray-700 hover:bg-gray-200 transition-colors active:scale-98"
             >
@@ -579,7 +813,7 @@ export default function SajuClient({ creditBalance, initialPersons }: Props) {
                       {hasReading ? (
                         <span className="text-xs font-semibold text-green-600">결과 보기</span>
                       ) : (
-                        <span className="text-xs font-semibold text-indigo-500">1크레딧</span>
+                        <span className="text-xs font-semibold text-indigo-500">만세력 보기</span>
                       )}
                       <button
                         onClick={(e) => handleDeletePerson(e, person.id)}
