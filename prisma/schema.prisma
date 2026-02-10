@@ -90,6 +90,7 @@ model PaymentIntent {
 
   // Payment provider order/transaction key
   providerOrderId String? @unique
+  providerTid     String?  // KakaoPay tid (stored for mobile app callback)
   status      String   @default("CREATED") // CREATED|REQUESTED|EXPIRED
 
   createdAt   DateTime @default(now())

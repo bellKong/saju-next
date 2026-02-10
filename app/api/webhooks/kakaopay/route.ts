@@ -4,6 +4,16 @@ import { getProduct } from "@/lib/payments/products";
 
 export async function POST(req: NextRequest) {
   try {
+    // Verify webhook secret if configured
+    const webhookSecret = process.env.WEBHOOK_KAKAOPAY_SECRET;
+    if (webhookSecret) {
+      const authHeader = req.headers.get("authorization");
+      if (authHeader !== `SECRET_KEY ${webhookSecret}`) {
+        console.error("KakaoPay webhook: invalid secret");
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      }
+    }
+
     const body = await req.json();
     const { event_type, data } = body;
 

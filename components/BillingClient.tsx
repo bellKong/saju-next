@@ -62,10 +62,28 @@ export default function BillingClient() {
           `토스페이 결제 연동이 필요합니다.\n주문번호: ${data.orderId}\n금액: ${data.amount}원`
         );
       } else {
-        // KakaoPay integration point
-        alert(
-          `카카오페이 결제 연동이 필요합니다.\n주문번호: ${data.orderId}\n금액: ${data.amount}원`
-        );
+        // KakaoPay: call ready API then redirect
+        const readyRes = await fetch("/api/payments/kakaopay/ready", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ orderId: data.orderId }),
+        });
+
+        if (!readyRes.ok) {
+          const err = await readyRes.json();
+          throw new Error(err.error || "카카오페이 결제 준비 실패");
+        }
+
+        const readyData = await readyRes.json();
+
+        // Redirect to KakaoPay: use mobile URL on mobile, PC URL on desktop
+        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+        const redirectUrl = isMobile
+          ? readyData.redirectUrl
+          : readyData.redirectUrlPc;
+
+        window.location.href = redirectUrl;
+        return; // prevent setLoading(false) in finally
       }
     } catch {
       alert("결제 준비 중 오류가 발생했습니다");

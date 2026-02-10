@@ -13,9 +13,9 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const { pg_token, tid, orderId } = body;
 
-    if (!pg_token || !tid || !orderId) {
+    if (!pg_token || !orderId) {
       return NextResponse.json(
-        { error: "Missing required fields" },
+        { error: "Missing required fields (pg_token, orderId)" },
         { status: 400 }
       );
     }
@@ -36,9 +36,18 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
+    // Resolve tid: prefer body, fallback to DB
+    const resolvedTid = tid || intent.providerTid;
+    if (!resolvedTid) {
+      return NextResponse.json(
+        { error: "Missing tid" },
+        { status: 400 }
+      );
+    }
+
     // Check if already processed (use tid as unique payment ID)
     const existingPayment = await prisma.payment.findUnique({
-      where: { providerPaymentId: tid },
+      where: { providerPaymentId: resolvedTid },
     });
 
     if (existingPayment) {
@@ -49,11 +58,11 @@ export async function POST(req: NextRequest) {
     }
 
     // Approve payment with KakaoPay API
-    const adminKey = process.env.KAKAOPAY_ADMIN_KEY;
+    const secretKey = process.env.KAKAOPAY_SECRET_KEY;
     const cid = process.env.KAKAOPAY_CID || "TC0ONETIME";
 
-    if (!adminKey) {
-      throw new Error("KAKAOPAY_ADMIN_KEY not configured");
+    if (!secretKey) {
+      throw new Error("KAKAOPAY_SECRET_KEY not configured");
     }
 
     const kakaoResponse = await fetch(
@@ -61,12 +70,12 @@ export async function POST(req: NextRequest) {
       {
         method: "POST",
         headers: {
-          Authorization: `SECRET_KEY ${adminKey}`,
+          Authorization: `SECRET_KEY ${secretKey}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
           cid,
-          tid,
+          tid: resolvedTid,
           partner_order_id: orderId,
           partner_user_id: session.user.id,
           pg_token,
@@ -97,7 +106,7 @@ export async function POST(req: NextRequest) {
           provider: "kakaopay",
           amount: intent.amount,
           currency: intent.currency,
-          providerPaymentId: tid,
+          providerPaymentId: resolvedTid,
           paymentIntentId: intent.id,
           status: "CONFIRMED",
           raw: verifiedPayment,
