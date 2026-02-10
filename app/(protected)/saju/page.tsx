@@ -25,6 +25,7 @@ export default async function SajuPage() {
           createdAt: true,
         },
       },
+      manseryeok: true,
     },
   });
   //test
@@ -40,6 +41,40 @@ export default async function SajuPage() {
         birthTime: p.birthTime,
         calendarType: p.calendarType,
         gender: p.gender,
+        manseryeok: p.manseryeok
+          ? {
+              solarDate: p.manseryeok.solarDate,
+              lunarDate: p.manseryeok.lunarDate,
+              sajuYear: p.manseryeok.sajuYear,
+              yearPillar: {
+                gan: p.manseryeok.yearGan, ji: p.manseryeok.yearJi,
+                ganKr: p.manseryeok.yearGanKr, jiKr: p.manseryeok.yearJiKr,
+                ohangGan: p.manseryeok.yearOhangGan, ohangJi: p.manseryeok.yearOhangJi,
+              },
+              monthPillar: {
+                gan: p.manseryeok.monthGan, ji: p.manseryeok.monthJi,
+                ganKr: p.manseryeok.monthGanKr, jiKr: p.manseryeok.monthJiKr,
+                ohangGan: p.manseryeok.monthOhangGan, ohangJi: p.manseryeok.monthOhangJi,
+              },
+              dayPillar: {
+                gan: p.manseryeok.dayGan, ji: p.manseryeok.dayJi,
+                ganKr: p.manseryeok.dayGanKr, jiKr: p.manseryeok.dayJiKr,
+                ohangGan: p.manseryeok.dayOhangGan, ohangJi: p.manseryeok.dayOhangJi,
+              },
+              timePillar: p.manseryeok.timeGan ? {
+                gan: p.manseryeok.timeGan, ji: p.manseryeok.timeJi!,
+                ganKr: p.manseryeok.timeGanKr!, jiKr: p.manseryeok.timeJiKr!,
+                ohangGan: p.manseryeok.timeOhangGan!, ohangJi: p.manseryeok.timeOhangJi!,
+              } : null,
+              ohang: {
+                "木": p.manseryeok.ohangMok,
+                "火": p.manseryeok.ohangHwa,
+                "土": p.manseryeok.ohangTo,
+                "金": p.manseryeok.ohangGeum,
+                "水": p.manseryeok.ohangSu,
+              },
+            }
+          : null,
         latestReading: p.readings[0]
           ? {
               id: p.readings[0].id,

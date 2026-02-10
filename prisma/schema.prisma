@@ -185,8 +185,60 @@ model Person {
   updatedAt     DateTime @updatedAt
 
   readings      Reading[]
+  manseryeok    Manseryeok?
 
   @@index([userId])
+}
+
+model Manseryeok {
+  id          String   @id @default(cuid())
+  personId    String   @unique
+  person      Person   @relation(fields: [personId], references: [id], onDelete: Cascade)
+
+  solarDate   String   // 양력 생년월일
+  lunarDate   String   // 음력 생년월일
+  sajuYear    Int      // 입춘 기준 사주 연도
+
+  // 연주 (年柱)
+  yearGan     String   // 천간 한자 (甲)
+  yearJi      String   // 지지 한자 (子)
+  yearGanKr   String   // 천간 한글 (갑)
+  yearJiKr    String   // 지지 한글 (자)
+  yearOhangGan String  // 천간 오행 (木)
+  yearOhangJi  String  // 지지 오행 (水)
+
+  // 월주 (月柱)
+  monthGan     String
+  monthJi      String
+  monthGanKr   String
+  monthJiKr    String
+  monthOhangGan String
+  monthOhangJi  String
+
+  // 일주 (日柱)
+  dayGan       String
+  dayJi        String
+  dayGanKr     String
+  dayJiKr      String
+  dayOhangGan  String
+  dayOhangJi   String
+
+  // 시주 (時柱) — 출생시간 모르면 null
+  timeGan      String?
+  timeJi       String?
+  timeGanKr    String?
+  timeJiKr     String?
+  timeOhangGan String?
+  timeOhangJi  String?
+
+  // 오행 집계
+  ohangMok     Int     @default(0) // 木
+  ohangHwa     Int     @default(0) // 火
+  ohangTo      Int     @default(0) // 土
+  ohangGeum    Int     @default(0) // 金
+  ohangSu      Int     @default(0) // 水
+
+  createdAt    DateTime @default(now())
 }
 
 model Share {

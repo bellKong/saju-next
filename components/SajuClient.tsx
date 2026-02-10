@@ -19,6 +19,7 @@ interface Person {
   birthTime: string | null;
   calendarType: string;
   gender: string;
+  manseryeok: SajuResult | null;
   latestReading: LatestReading | null;
 }
 
@@ -142,6 +143,7 @@ export default function SajuClient({ creditBalance, initialPersons }: Props) {
           birthTime: data.person.birthTime,
           calendarType: data.person.calendarType,
           gender: data.person.gender,
+          manseryeok: null,
           latestReading: null,
         };
         setPersons((prev) => [newPerson, ...prev]);
@@ -166,7 +168,15 @@ export default function SajuClient({ creditBalance, initialPersons }: Props) {
       return;
     }
 
-    // Show 만세력 preview first (free)
+    // If cached manseryeok exists, show preview immediately
+    if (person.manseryeok) {
+      setSelectedPerson(person);
+      setSajuPreview(person.manseryeok);
+      setView("preview");
+      return;
+    }
+
+    // Fetch 만세력 from API
     setSelectedPerson(person);
     setPreviewLoading(true);
     setSajuPreview(null);
@@ -177,6 +187,7 @@ export default function SajuClient({ creditBalance, initialPersons }: Props) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          personId: person.id,
           birthDate: person.birthDate,
           birthTime: person.birthTime || "모름",
           calendarType: person.calendarType,
@@ -187,6 +198,12 @@ export default function SajuClient({ creditBalance, initialPersons }: Props) {
       const data = await res.json();
       if (data.success) {
         setSajuPreview(data.sajuResult);
+        // Update local cache so next click is instant
+        setPersons((prev) =>
+          prev.map((p) =>
+            p.id === person.id ? { ...p, manseryeok: data.sajuResult } : p
+          )
+        );
       } else {
         alert(data.error || "만세력 계산에 실패했습니다");
         setView("list");
