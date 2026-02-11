@@ -2,13 +2,8 @@ import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import prisma from "@/lib/prisma";
 import Link from "next/link";
-import ScrollReveal from "@/components/ScrollReveal";
-
-const typeConfig = {
-  SAJU: { label: "사주팔자", icon: "🔮", color: "bg-indigo-100 text-indigo-700" },
-  COMPAT: { label: "궁합", icon: "💕", color: "bg-pink-100 text-pink-700" },
-  FORTUNE: { label: "운세", icon: "⭐", color: "bg-amber-100 text-amber-700" },
-};
+import ScrollReveal from "@/components/layout/ScrollReveal";
+import { READING_TYPE_CONFIG } from "@/constants/reading";
 
 export default async function HistoryPage() {
   const session = await auth();
@@ -58,8 +53,8 @@ export default async function HistoryPage() {
           <div className="space-y-3">
             {readings.map((reading) => {
               const config =
-                typeConfig[reading.type as keyof typeof typeConfig] ||
-                typeConfig.SAJU;
+                READING_TYPE_CONFIG[reading.type as keyof typeof READING_TYPE_CONFIG] ||
+                READING_TYPE_CONFIG.SAJU;
               return (
                 <ScrollReveal key={reading.id}>
                   <div className="bg-gray-50 rounded-2xl p-5 hover:bg-gray-100 transition-colors card-hover">

@@ -1,7 +1,7 @@
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import Header from "@/components/Header";
-import BottomNav from "@/components/BottomNav";
+import Header from "@/components/layout/Header";
+import BottomNav from "@/components/layout/BottomNav";
 
 export default async function ProtectedLayout({
   children,

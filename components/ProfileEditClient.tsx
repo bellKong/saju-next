@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { updateProfile } from "@/services/profile.api";
+import { VALIDATION_NAME_REQUIRED, ERROR_NETWORK, ERROR_GENERIC } from "@/constants/messages";
 
 interface Props {
   user: {
@@ -22,31 +24,26 @@ export default function ProfileEditClient({ user }: Props) {
 
   const handleSave = async () => {
     if (!name.trim()) {
-      alert("이름을 입력해주세요");
+      alert(VALIDATION_NAME_REQUIRED);
       return;
     }
 
     setSaving(true);
     try {
-      const res = await fetch("/api/profile", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: name.trim(),
-          birthDate: birthDate || null,
-          gender: gender || null,
-        }),
+      const data = await updateProfile({
+        name: name.trim(),
+        birthDate: birthDate || null,
+        gender: gender || null,
       });
 
-      const data = await res.json();
       if (data.success) {
         router.push("/mypage");
         router.refresh();
       } else {
-        alert(data.error || "오류가 발생했습니다");
+        alert(data.error || ERROR_GENERIC);
       }
     } catch {
-      alert("네트워크 오류가 발생했습니다");
+      alert(ERROR_NETWORK);
     } finally {
       setSaving(false);
     }

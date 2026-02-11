@@ -1,106 +1,49 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useReadingForm } from "@/hooks/useReadingForm";
+import { LoadingSpinner, ReadingResultCard } from "@/components/ui";
+import { LOADING_COMPAT_ANALYSIS } from "@/constants/messages";
 
-export default function CompatibilityForm({
-  creditBalance,
-}: {
-  creditBalance: number;
-}) {
-  const router = useRouter();
-  const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<any>(null);
+export default function CompatibilityForm({ creditBalance }: { creditBalance: number }) {
+  const { loading, result, submitReading, resetResult } = useReadingForm();
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (creditBalance <= 0) return;
 
     const formData = new FormData(e.currentTarget);
-    setLoading(true);
-
-    try {
-      const res = await fetch("/api/readings", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          type: "COMPAT",
-          input: {
-            person1: {
-              birthDate: formData.get("myBirthDate"),
-              gender: formData.get("myGender"),
-            },
-            person2: {
-              birthDate: formData.get("partnerBirthDate"),
-              gender: formData.get("partnerGender"),
-            },
-          },
-        }),
-      });
-
-      const data = await res.json();
-      if (data.success) {
-        setResult(data.reading);
-      } else {
-        alert(data.error || "오류가 발생했습니다");
-      }
-    } catch {
-      alert("네트워크 오류가 발생했습니다");
-    } finally {
-      setLoading(false);
-    }
+    await submitReading({
+      type: "COMPAT",
+      input: {
+        person1: {
+          birthDate: formData.get("myBirthDate") as string,
+          gender: formData.get("myGender") as string,
+        },
+        person2: {
+          birthDate: formData.get("partnerBirthDate") as string,
+          gender: formData.get("partnerGender") as string,
+        },
+      },
+    });
   };
 
   if (result) {
     return (
-      <div className="px-6 py-6">
-        <div className="bg-gradient-to-br from-pink-50 to-rose-50 rounded-3xl p-6 mb-4">
-          <h2 className="text-xl font-bold text-gray-900 mb-1">궁합 분석 결과</h2>
-          <p className="text-sm text-gray-500">{result.summary}</p>
-        </div>
-        <div className="bg-white rounded-3xl border border-gray-100 p-6">
-          <div className="prose prose-sm max-w-none whitespace-pre-wrap text-gray-700 leading-relaxed">
-            {result.result?.content}
-          </div>
-        </div>
-        <div className="flex gap-3 mt-6">
-          <button
-            onClick={() => {
-              setResult(null);
-              router.refresh();
-            }}
-            className="flex-1 py-3.5 rounded-2xl bg-gray-100 font-semibold text-gray-700 hover:bg-gray-200 transition-colors"
-          >
-            다시 보기
-          </button>
-          <button
-            onClick={async () => {
-              await fetch(`/api/readings/${result.id}/share`, { method: "POST" });
-              alert("공유 링크가 생성되었습니다!");
-            }}
-            className="flex-1 py-3.5 rounded-2xl bg-gray-900 font-semibold text-white hover:bg-gray-800 transition-colors"
-          >
-            공유하기
-          </button>
-        </div>
-      </div>
+      <ReadingResultCard
+        title="궁합 분석 결과"
+        summary={result.summary}
+        content={result.result?.content}
+        gradient="from-pink-50 to-rose-50"
+        readingId={result.id}
+        onReset={resetResult}
+      />
     );
   }
 
   return (
     <div className="px-6 py-6">
       {loading ? (
-        <div className="flex flex-col items-center justify-center py-20">
-          <div className="relative w-20 h-20 mb-6">
-            <div className="absolute inset-0 rounded-full border-4 border-pink-100" />
-            <div className="absolute inset-0 rounded-full border-4 border-pink-500 border-t-transparent animate-spin" />
-            <div className="absolute inset-0 flex items-center justify-center text-2xl animate-float">
-              💕
-            </div>
-          </div>
-          <p className="text-lg font-semibold text-gray-900 mb-1">궁합을 분석하고 있어요</p>
-          <p className="text-sm text-gray-400">잠시만 기다려주세요...</p>
-        </div>
+        <LoadingSpinner color="pink" emoji="💕" message={LOADING_COMPAT_ANALYSIS} />
       ) : (
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Person 1 */}

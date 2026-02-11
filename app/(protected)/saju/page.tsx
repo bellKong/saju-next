@@ -1,7 +1,7 @@
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import prisma from "@/lib/prisma";
-import SajuClient from "@/components/SajuClient";
+import SajuClient from "./_components/SajuClient";
 
 export default async function SajuPage() {
   const session = await auth();
@@ -28,7 +28,6 @@ export default async function SajuPage() {
       manseryeok: true,
     },
   });
-  //test
 
   return (
     <SajuClient

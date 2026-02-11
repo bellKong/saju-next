@@ -1,6 +1,6 @@
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import ScrollReveal from "@/components/ScrollReveal";
+import ScrollReveal from "@/components/layout/ScrollReveal";
 import FortuneForm from "@/components/FortuneForm";
 
 export default async function FortunePage() {

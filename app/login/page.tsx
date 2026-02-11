@@ -1,5 +1,5 @@
 import { signIn } from "@/lib/auth";
-import ScrollReveal from "@/components/ScrollReveal";
+import ScrollReveal from "@/components/layout/ScrollReveal";
 import Link from "next/link";
 
 export default function LoginPage() {

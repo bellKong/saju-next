@@ -1,102 +1,18 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
-
-const products = [
-  {
-    code: "CREDIT_1",
-    name: "1회",
-    credits: 1,
-    price: 990,
-    pricePerCredit: 990,
-    description: "가볍게 한 번 이용",
-    icon: "🎯",
-  },
-  {
-    code: "CREDIT_5",
-    name: "5+1회",
-    credits: 6,
-    price: 4950,
-    pricePerCredit: 825,
-    description: "5회 구매 시 +1회 보너스",
-    badge: "+1 보너스",
-    popular: true,
-    icon: "⭐",
-  },
-  {
-    code: "CREDIT_10",
-    name: "10+2회",
-    credits: 12,
-    price: 9900,
-    pricePerCredit: 825,
-    description: "10회 구매 시 +2회 보너스",
-    badge: "+2 보너스",
-    icon: "👑",
-  },
-];
+import { usePayment } from "@/hooks/usePayment";
+import { UI_PRODUCTS } from "@/constants/products";
 
 export default function BillingClient() {
-  const router = useRouter();
-  const [selectedProduct, setSelectedProduct] = useState(products[1]);
-  const [loading, setLoading] = useState(false);
-
-  const handlePurchase = async (provider: "toss" | "kakaopay") => {
-    setLoading(true);
-
-    try {
-      const res = await fetch("/api/payments/intent", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          provider,
-          productCode: selectedProduct.code,
-        }),
-      });
-
-      const data = await res.json();
-
-      if (provider === "toss") {
-        // Toss Payments SDK integration point
-        alert(
-          `토스페이 결제 연동이 필요합니다.\n주문번호: ${data.orderId}\n금액: ${data.amount}원`
-        );
-      } else {
-        // KakaoPay: call ready API then redirect
-        const readyRes = await fetch("/api/payments/kakaopay/ready", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ orderId: data.orderId }),
-        });
-
-        if (!readyRes.ok) {
-          const err = await readyRes.json();
-          throw new Error(err.error || "카카오페이 결제 준비 실패");
-        }
-
-        const readyData = await readyRes.json();
-
-        // Redirect to KakaoPay: use mobile URL on mobile, PC URL on desktop
-        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-        const redirectUrl = isMobile
-          ? readyData.redirectUrl
-          : readyData.redirectUrlPc;
-
-        window.location.href = redirectUrl;
-        return; // prevent setLoading(false) in finally
-      }
-    } catch {
-      alert("결제 준비 중 오류가 발생했습니다");
-    } finally {
-      setLoading(false);
-    }
-  };
+  const [selectedProduct, setSelectedProduct] = useState(UI_PRODUCTS[1]);
+  const { loading, handlePurchase } = usePayment();
 
   return (
     <div className="px-6 pb-8">
       {/* Product Selection */}
       <div className="space-y-3 mb-8">
-        {products.map((product) => {
+        {UI_PRODUCTS.map((product) => {
           const isSelected = selectedProduct.code === product.code;
           return (
             <button
@@ -146,7 +62,6 @@ export default function BillingClient() {
                 </div>
               </div>
 
-              {/* Selected indicator */}
               <div
                 className={`absolute top-1/2 -translate-y-1/2 left-2 w-1.5 h-8 rounded-full transition-all ${
                   isSelected ? "bg-indigo-500" : "bg-transparent"
@@ -160,7 +75,7 @@ export default function BillingClient() {
       {/* Payment Buttons */}
       <div className="space-y-3">
         <button
-          onClick={() => handlePurchase("kakaopay")}
+          onClick={() => handlePurchase("kakaopay", selectedProduct.code, selectedProduct.price)}
           disabled={loading}
           className="w-full py-4 rounded-2xl font-semibold text-base transition-all active:scale-98 disabled:opacity-50"
           style={{ backgroundColor: "#FEE500", color: "#000000" }}
@@ -174,7 +89,7 @@ export default function BillingClient() {
         </button>
 
         <button
-          onClick={() => handlePurchase("toss")}
+          onClick={() => handlePurchase("toss", selectedProduct.code, selectedProduct.price)}
           disabled={loading}
           className="w-full py-4 rounded-2xl bg-blue-500 text-white font-semibold text-base hover:bg-blue-600 transition-all active:scale-98 disabled:opacity-50"
         >

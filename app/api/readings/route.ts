@@ -76,8 +76,8 @@ export async function POST(req: NextRequest) {
       });
 
       userId = result.userId;
-    } catch (error: any) {
-      if (error.message === "Insufficient credits") {
+    } catch (error) {
+      if (error instanceof Error && error.message === "Insufficient credits") {
         return NextResponse.json(
           { error: "Insufficient credits" },
           { status: 400 }
@@ -199,7 +199,7 @@ export async function GET(req: NextRequest) {
     const cursor = searchParams.get("cursor");
     const limit = parseInt(searchParams.get("limit") || "20");
 
-    const where: any = {
+    const where: { userId: string; type?: string; id?: { lt: string } } = {
       userId: session.user.id,
     };
 

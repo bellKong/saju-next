@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { auth } from "@/lib/auth";
-import Header from "@/components/Header";
-import ScrollReveal from "@/components/ScrollReveal";
+import Header from "@/components/layout/Header";
+import ScrollReveal from "@/components/layout/ScrollReveal";
 
 export default async function Home() {
   const session = await auth();

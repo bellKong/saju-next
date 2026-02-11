@@ -1,13 +1,8 @@
 import { notFound } from "next/navigation";
 import prisma from "@/lib/prisma";
-import Header from "@/components/Header";
-import ScrollReveal from "@/components/ScrollReveal";
-
-const typeConfig = {
-  SAJU: { label: "사주팔자", icon: "🔮", gradient: "from-indigo-500 to-purple-600" },
-  COMPAT: { label: "궁합", icon: "💕", gradient: "from-pink-400 to-rose-500" },
-  FORTUNE: { label: "운세", icon: "⭐", gradient: "from-amber-400 to-orange-500" },
-};
+import Header from "@/components/layout/Header";
+import ScrollReveal from "@/components/layout/ScrollReveal";
+import { READING_TYPE_CONFIG } from "@/constants/reading";
 
 export default async function SharePage({
   params,
@@ -29,8 +24,8 @@ export default async function SharePage({
   }
 
   const config =
-    typeConfig[share.reading.type as keyof typeof typeConfig] ||
-    typeConfig.SAJU;
+    READING_TYPE_CONFIG[share.reading.type as keyof typeof READING_TYPE_CONFIG] ||
+    READING_TYPE_CONFIG.SAJU;
 
   return (
     <>
@@ -62,7 +57,7 @@ export default async function SharePage({
           <div className="px-6 py-6">
             <div className="bg-white rounded-3xl border border-gray-100 p-6">
               <div className="prose prose-sm max-w-none whitespace-pre-wrap text-gray-700 leading-relaxed">
-                {(share.reading.result as any)?.content ||
+                {(share.reading.result as Record<string, string> | null)?.content ||
                   JSON.stringify(share.reading.result, null, 2)}
               </div>
             </div>

@@ -52,6 +52,12 @@ Readings can be shared via nanoid-based `Share` records. Public access at `/shar
 - `lib/payments/products.ts` — Credit product definitions with `isValidProductCode()` type guard
 - `prisma/schema.prisma` — All models: User, Account, Session, PaymentIntent, Payment, CreditLedger, Reading, Share
 - `app/(protected)/layout.tsx` — Protected route layout (auth check + Header/BottomNav)
+- `constants/` — 프로젝트 전역 상수 (messages, saju, reading, products)
+- `services/` — 클라이언트 API 래퍼 (fetch 호출 캡슐화)
+- `hooks/` — 커스텀 React hooks (useReadingForm, usePersonManager 등)
+- `types/` — 공유 TypeScript 타입 (reading.ts, saju.ts)
+- `components/ui/` — 재사용 UI 컴포넌트 (LoadingSpinner, ReadingResultCard, BackButton)
+- `components/layout/` — 레이아웃 컴포넌트 (Header, BottomNav, ScrollReveal)
 
 ## Custom CSS Classes (`app/globals.css`)
 
@@ -72,3 +78,32 @@ Readings can be shared via nanoid-based `Share` records. Public access at `/shar
 - All AI prompts are in Korean
 - Database: PostgreSQL on Neon (pooled `DATABASE_URL` + direct `DIRECT_URL` for migrations)
 - `next.config.ts`: server actions body size limit is `2mb`
+
+## Coding Conventions
+
+### 폴더 구조
+- `constants/` — 프로젝트 전역 상수
+- `services/` — 클라이언트 API 레이어 (`*.api.ts`)
+- `hooks/` — 커스텀 React hooks (`use*.ts`)
+- `types/` — 공유 TypeScript 타입
+- `components/ui/` — 재사용 UI 컴포넌트
+- `components/layout/` — 레이아웃 컴포넌트 (Header, BottomNav, ScrollReveal)
+- `app/(protected)/<page>/_components/` — 페이지 전용 컴포넌트
+
+### 파일 네이밍
+- 컴포넌트: `PascalCase.tsx`
+- 훅: `useSomething.ts`
+- 상수: `something.ts` (도메인명)
+- API 서비스: `something.api.ts`
+
+### 금지 규칙
+- 컴포넌트에서 직접 `fetch()` 호출 금지 → `services/` 사용
+- 동일 JSX 패턴 2회 이상 반복 금지 → 즉시 컴포넌트 추출
+- 파일 300~400줄 이상 금지 → 섹션 분리
+- 하드코딩 상수 금지 → `constants/` 사용
+- `any` 타입 금지 → 명시적 타입 정의
+
+### 중복 제거 기준
+- UI 구조 70% 이상 유사 → 컴포넌트 추출
+- 같은 상태/이벤트 흐름 반복 → hook 추출
+- 같은 API 호출 + 에러 처리 반복 → `services/` API 모듈

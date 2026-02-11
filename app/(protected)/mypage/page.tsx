@@ -1,7 +1,7 @@
 import { auth, signOut } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import ScrollReveal from "@/components/ScrollReveal";
+import ScrollReveal from "@/components/layout/ScrollReveal";
 
 const services = [
   {

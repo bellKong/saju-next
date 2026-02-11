@@ -41,7 +41,8 @@ function sajuResultToDb(personId: string, r: SajuResult) {
   };
 }
 
-export function dbToSajuResult(m: any): SajuResult {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function dbToSajuResult(m: Record<string, any>): SajuResult {
   return {
     solarDate: m.solarDate,
     lunarDate: m.lunarDate,
@@ -128,10 +129,10 @@ export async function POST(req: NextRequest) {
     }
 
     return NextResponse.json({ success: true, sajuResult });
-  } catch (error: any) {
+  } catch (error) {
     console.error("Saju preview error:", error);
     return NextResponse.json(
-      { error: error.message || "만세력 계산에 실패했습니다" },
+      { error: error instanceof Error ? error.message : "만세력 계산에 실패했습니다" },
       { status: 500 }
     );
   }
